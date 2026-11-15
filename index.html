@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>The Vector Mars</title>
+
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  />
+
+</head>
+
+
+<body>
+
+  <div class="app-shell">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="hero">
+
+      <div>
+
+        <p class="eyebrow">
+          NASA Space Apps Challenge
+        </p>
+
+        <h1>
+          The Vector Mars Maps
+        </h1>
+
+        <p class="subtitle">
+          Compare shortest-distance and terrain-aware routes between mission points in Jezero Crater.
+        </p>
+
+      </div>
+
+
+      <div
+        class="status-pill"
+        id="dataStatus"
+      >
+        Loading route data…
+      </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN LAYOUT
+    ====================================================== -->
+
+    <main class="layout">
+
+
+      <!-- ===================================================
+           LEFT CONTROL PANEL
+      ==================================================== -->
+
+      <aside class="control-panel">
+
+
+        <!-- ROUTE SETUP -->
+
+        <section class="panel-card">
+
+          <h2>
+            Route setup
+          </h2>
+
+
+          <label for="startSelect">
+            Start
+          </label>
+
+          <select id="startSelect"></select>
+
+
+          <label for="destinationSelect">
+            Destination
+          </label>
+
+          <select id="destinationSelect"></select>
+
+
+          <label for="modeSelect">
+            Route mode
+          </label>
+
+          <select id="modeSelect">
+
+            <option value="terrain_aware">
+              Terrain-aware
+            </option>
+
+            <option value="shortest">
+              Shortest distance
+            </option>
+
+          </select>
+
+
+          <button id="calculateBtn">
+            Calculate route
+          </button>
+
+
+          <button
+            id="compareBtn"
+            class="secondary"
+          >
+            Compare both routes
+          </button>
+
+        </section>
+
+
+
+        <!-- ===================================================
+             SELECTED ROUTE METRICS
+        ==================================================== -->
+
+        <section class="panel-card">
+
+          <h2>
+            Selected route
+          </h2>
+
+
+          <div class="metric-grid">
+
+
+            <div class="metric">
+
+              <span class="metric-label">
+                Distance
+              </span>
+
+              <strong id="distanceMetric">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="metric">
+
+              <span class="metric-label">
+                Uphill
+              </span>
+
+              <strong id="uphillMetric">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="metric">
+
+              <span class="metric-label">
+                Downhill
+              </span>
+
+              <strong id="downhillMetric">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="metric">
+
+              <span class="metric-label">
+                Max slope
+              </span>
+
+              <strong id="slopeMetric">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- Mars Trek Validation -->
+
+          <div class="validation">
+
+            <span>
+              Mars Trek profile
+            </span>
+
+            <strong id="referenceMetric">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="validation">
+
+            <span>
+              Difference
+            </span>
+
+            <strong id="differenceMetric">
+              —
+            </strong>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- ===================================================
+             NEW DESTINATION INFORMATION CARD
+        ==================================================== -->
+
+        <section class="panel-card destination-info-card">
+
+
+          <p class="eyebrow">
+            Mission destination
+          </p>
+
+
+          <h2 id="destinationInfoName">
+            Destination
+          </h2>
+
+
+
+          <!-- TERRAIN / LOCATION TYPE -->
+
+          <div class="destination-info-item">
+
+            <span class="info-label">
+              Terrain / Location Type
+            </span>
+
+            <p id="destinationType">
+              Add information here.
+            </p>
+
+          </div>
+
+
+
+          <!-- SCIENTIFIC IMPORTANCE -->
+
+          <div class="destination-info-item">
+
+            <span class="info-label">
+              Scientific Importance
+            </span>
+
+            <p id="destinationScience">
+              Add information here.
+            </p>
+
+          </div>
+
+
+
+          <!-- NAVIGATION NOTES -->
+
+          <div class="destination-info-item">
+
+            <span class="info-label">
+              Navigation Notes
+            </span>
+
+            <p id="destinationNavigation">
+              Add information here.
+            </p>
+
+          </div>
+
+
+
+          <!-- NASA DATA SOURCE -->
+
+          <div class="destination-info-item">
+
+            <span class="info-label">
+              NASA Data / Source
+            </span>
+
+            <p id="destinationSource">
+              Add information here.
+            </p>
+
+          </div>
+
+
+
+          <!-- COORDINATES -->
+
+          <div class="destination-coordinates">
+
+            <span id="destinationCoordinates">
+              Coordinates: —
+            </span>
+
+          </div>
+
+
+        </section>
+
+
+
+        <!-- ===================================================
+             ROUTING MODEL
+        ==================================================== -->
+
+        <section class="panel-card compact">
+
+          <h2>
+            Routing model
+          </h2>
+
+
+          <p>
+            Shortest mode minimizes distance. Terrain-aware mode adds slope and uphill penalties and rejects
+            segments above the prototype slope threshold.
+          </p>
+
+
+          <div
+            id="modelSettings"
+            class="settings-list"
+          ></div>
+
+        </section>
+
+
+      </aside>
+
+
+
+      <!-- ===================================================
+           MAP PANEL
+      ==================================================== -->
+
+      <section class="map-panel">
+
+
+        <!-- MAP HEADER -->
+
+        <div class="map-header">
+
+
+          <div>
+
+            <p class="eyebrow">
+              Jezero navigation map
+            </p>
+
+            <h2 id="routeTitle">
+              Select a route
+            </h2>
+
+          </div>
+
+
+
+          <!-- LEGEND -->
+
+          <div class="legend">
+
+
+            <span>
+
+              <i class="dot start"></i>
+
+              Start
+
+            </span>
+
+
+            <span>
+
+              <i class="dot goal"></i>
+
+              Destination
+
+            </span>
+
+
+            <span>
+
+              <i class="line shortest"></i>
+
+              Shortest
+
+            </span>
+
+
+            <span>
+
+              <i class="line terrain"></i>
+
+              Terrain-aware
+
+            </span>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- ===================================================
+             MARS MAP
+        ==================================================== -->
+
+        <div class="canvas-wrap">
+
+
+          <canvas id="routeCanvas"></canvas>
+
+
+          <div
+            class="canvas-hint"
+            id="canvasHint"
+          >
+
+            Route is projected onto the Mars Trek map using the same geographic bounding box.
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- ===================================================
+             POINT OF INTEREST CARDS
+        ==================================================== -->
+
+        <div
+          class="poi-strip"
+          id="poiStrip"
+        ></div>
+
+
+      </section>
+
+
+    </main>
+
+
+  </div>
+
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
+
+  <script src="app.js"></script>
+
+
+</body>
+
+</html>
